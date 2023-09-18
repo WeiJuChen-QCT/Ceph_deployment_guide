@@ -817,3 +817,27 @@ $ ssh root@<admin-host> "ceph auth get-or-create client.<rbd_username> mon 'prof
 
 > ssh ceph1 "ceph auth get-or-create client.rbdwjchen mon 'profile rbd' osd 'profile rbd pool=rbd1' osd 'allow rwx pool=cache2' mgr 'profile rbd pool=rbd1'" | sudo tee /etc/ceph/ceph.client.rbdwjchen.keyring
 ```
+
+One node cluster
+-------------------------
+To create a single node ceph cluster 
+```
+$ cephadm bootstrap --mon-ip <ip> --single-host-defaults
+```
+The ```--single-host-defaults``` flag sets the following configuration options:
+```
+global/osd_crush_chooseleaf_type = 0 (default 1)
+global/osd_pool_default_size = 2 (default 3)
+mgr/mgr_standby_modules = false (default true)
+```
+If you are trying to create a cluster on a single node, you must change the default of the ```osd_crush_chooseleaf_type``` setting from ```1``` (meaning host or node) to ```0``` (meaning osd) in your Ceph configuration file before you create your monitors and OSDs. 
+
+This tells Ceph that an OSD can peer with another OSD on the same host. If you are trying to set up a 1-node cluster and ```osd_crush_chooseleaf_type``` is greater than ```0```, Ceph will try to peer the PGs of one OSD with the PGs of another OSD on another node, chassis, rack, row, or even datacenter depending on the setting.
+
+
+To modified flags, execute following command:
+```
+$ ceph config set global osd_crush_chooseleaf_type 1
+$ ceph config set mgr mgr_standby_modules true
+$ ceph config set global osd_pool_default_size 3
+```
